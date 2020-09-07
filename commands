@@ -1,0 +1,10 @@
+# Run ROS "just_read":
+roslaunch robot_snake_1 just_read.launch
+
+# Run arduino-serial from ROS (each command in seperate terminal):
+roscore
+rqt
+rosrun rosserial_python serial_node _port:=/dev/ACM0 baud:=115200
+
+# Check which ports are in
+ls -l /dev/ttyACM*
