@@ -202,18 +202,18 @@ include_directories(
 # catkin_add_nosetests(test)
 
 
-add_executable(controller_1 include/my_header.cpp src/controller_1.cpp)
-add_dependencies(controller_1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(controller_1 ${catkin_LIBRARIES} )
+add_executable(controller_v10_1 include/my_header.cpp src/controller_1.cpp)
+add_dependencies(controller_v10_1 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(controller_v10_1 ${catkin_LIBRARIES} )
 
-add_executable(controller_3 include/my_header.cpp src/controller_3.cpp)
-add_dependencies(controller_3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(controller_3 ${catkin_LIBRARIES} )
+add_executable(controller_v10_3 include/my_header.cpp src/controller_3.cpp)
+add_dependencies(controller_v10_3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(controller_v10_3 ${catkin_LIBRARIES} )
 
-add_executable(cmd_test_2 src/cmd_test_2.cpp)
-add_dependencies(cmd_test_2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cmd_test_2 ${catkin_LIBRARIES} )
+add_executable(cmd_test_v10_2 src/cmd_test_2.cpp)
+add_dependencies(cmd_test_v10_2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cmd_test_v10_2 ${catkin_LIBRARIES} )
 
-add_executable(joint_cmd_tester src/joint_cmd_tester.cpp)
-add_dependencies(joint_cmd_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(joint_cmd_tester ${catkin_LIBRARIES} )
+add_executable(joint_cmd_v10_tester src/joint_cmd_tester.cpp)
+add_dependencies(joint_cmd_v10_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(joint_cmd_v10_tester ${catkin_LIBRARIES} )
