@@ -6,7 +6,7 @@
 void set_motor_pwm(const std_msgs::Int32MultiArray& msg);
 //-------------------- Global variables
 ros::NodeHandle nh;
-ros::Subscriber<std_msgs::Int32MultiArray> sub("/robot_snake_1/motor_cmd", &set_motor_pwm);
+ros::Subscriber<std_msgs::Int32MultiArray> sub("/robot_snake_4/motor_cmd", &set_motor_pwm);
 
 //juints {+1,-1,+2,-2,+3,-3,+4,-4} 
 // motor num {1,2,8,5,6,7,4,3}
@@ -28,7 +28,6 @@ void setup() {
 }
 
 void loop() {
-  //nh.logdebug("shmulik");
   nh.spinOnce();
   delay(2);
 }
