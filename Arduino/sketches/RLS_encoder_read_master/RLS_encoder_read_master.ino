@@ -9,7 +9,7 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <i2c_t3.h>
 #define PRINT 1
-#define N_links 2
+#define N_links 4
 
 //=====[ Constants ]========================================
 
@@ -21,11 +21,11 @@ byte data[4] = {0};
 //int value = 0;
 float arr[N_links] = {0};
 std_msgs::Float32MultiArray joint_ang;
-ros::Publisher pub_joints("/robot_snake_1/joint_val", &joint_ang);
+ros::Publisher pub_joints("/robot_snake_10/joint_val", &joint_ang);
 int count=0;
-//uint8_t slave_add[3] = {100, 101, 102};
-uint8_t slave_add[3] = {0x64, 0x65, 0x66};
-float joint_offset[] = {30.789,10.356, 3.281, 0.0};
+//uint8_t slave_add[N_links-1] = {100, 101, 102};
+uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66};
+float joint_offset[] = {40.0, 44.0, 206.0, 44.0};
 
 union u_tag{
     byte b[4];
@@ -97,7 +97,7 @@ void loop() {
         //arr[i] = u.fval - joint_offset[i];
         */
 
-        for (int i=0; i<4; i++)  
+        for (int i=0; i<4; i++)                         // 4 bytes
           converter.buffer[i] = Wire.read();
         Serial.print(converter.encReading);
         arr[i] = wrapTo180(converter.encReading - joint_offset[i]);     // Convert angle to [-180,180]

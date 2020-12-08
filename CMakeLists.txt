@@ -210,6 +210,10 @@ add_executable(controller_v10_3 include/my_header.cpp src/controller_3.cpp)
 add_dependencies(controller_v10_3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller_v10_3 ${catkin_LIBRARIES} )
 
+add_executable(controller_v10_4 include/PID.cpp src/controller_4.cpp)
+add_dependencies(controller_v10_4 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(controller_v10_4 ${catkin_LIBRARIES} )
+
 add_executable(cmd_test_v10_2 src/cmd_test_2.cpp)
 add_dependencies(cmd_test_v10_2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cmd_test_v10_2 ${catkin_LIBRARIES} )

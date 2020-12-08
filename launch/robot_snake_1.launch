@@ -32,7 +32,8 @@
     </node>
     -->
 
-    <node pkg="robot_snake_10" name="controller" type="controller_3" output="screen"/>
+    <!--<node pkg="robot_snake_10" name="controller" type="controller_3" output="screen"/>-->
+    <node pkg="robot_snake_10" name="controller" type="controller_4" output="screen"/>
 
     <!-- command that generates circular pattern -->
     <group if="$(arg test2)">
