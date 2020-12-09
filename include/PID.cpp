@@ -29,62 +29,8 @@
 
 using namespace std;
 
-class PIDImpl
-{
-public:
-    PIDImpl( double dt, double max, double min, double Kp, double Ki, double Kd );
-    ~PIDImpl();
-    double calculate( double setpoint, double pv );
-    void resetSum();
-    void setK(double dt, double max, double min, double Kp, double Ki, double Kd );
-    void testp(int);
-
-
-private:
-    double _dt;
-    double _max;
-    double _min;
-    double _Kp;
-    double _Kd;
-    double _Ki;
-    double _pre_error;
-    double _integral;
-};
-
-//PID::PID(){}
-PID::PID( double dt=0, double max=0, double min=0, double Kp=0, double Ki=0, double Kd=0 )
-{
-    std::cout << "Run constractor" << std::endl;
-    pimpl = new PIDImpl(dt,max,min,Kp,Ki,Kd);
-    std::cout << "done constractor" << std::endl;
-
-}
-double PID::calculate( double setpoint, double pv )
-{
-    return pimpl->calculate(setpoint,pv);
-}
-void PID::resetSum(){
-    pimpl->resetSum();
-}
-void PID::setK(double dt, double max, double min, double Kp, double Ki, double Kd ){
-    std::cout << "1"<< std::endl;
-    pimpl->setK( dt,  max,  min,  Kp,  Ki,  Kd);
-    std::cout << "3"<< std::endl;
-}
-int PID::test(int x){
-    pimpl->testp(x);
-    return x*2;
-}
-PID::~PID()
-{
-    delete pimpl;
-}
-
-
-/**
- * Implementation
- */
-PIDImpl::PIDImpl( double dt, double max, double min, double Kp, double Ki, double Kd ) :
+//PIDImpl::PIDImpl( double dt, double max, double min, double Kp, double Ki, double Kd ) :
+PID::PID( double dt, double max, double min, double Kp, double Ki, double Kd ) :
         _dt(dt),
         _max(max),
         _min(min),
@@ -96,15 +42,22 @@ PIDImpl::PIDImpl( double dt, double max, double min, double Kp, double Ki, doubl
 {
 }
 
-double PIDImpl::calculate( double setpoint, double pv )
+PID::~PID()
 {
-    std::cout << "calc --> _Kp: " << _Kp << std::endl;
+}
+
+//double PIDImpl::calculate( double setpoint, double pv )
+double PID::calculate( double setpoint, double pv )
+{
     // Calculate error
     double error = setpoint - pv;
     // Proportional term
     double Pout = _Kp * error;
     // Integral term
-    _integral += error * _dt;
+    if (_pre_error / error < 0)
+        _integral = 0;          // Clamping
+    else
+        _integral += error * _dt;
     double Iout = _Ki * _integral;
 
     // Derivative term
@@ -121,33 +74,31 @@ double PIDImpl::calculate( double setpoint, double pv )
         output = _min;
 
     // Save error to previous error
-    _pre_error = error;
+    this->_pre_error = error;
+
+    // Debug
+    std::cout << "calc: Iout" << Iout << endl;
+//    std::cout << "error: " << error << "\tPout: " << Pout << "\tDout: " << Dout << "\tIout: " << Iout << "\toutput: " << output << endl;
+
 
     return output;
 }
 
-void PIDImpl::resetSum(){
-    _integral = 0;
+void PID::resetSum(){
+    this->_integral = 0;
 }
 
-void PIDImpl::setK( double dt, double max, double min, double Kp, double Ki, double Kd  ){
-    _dt = dt;
-    _max = max;
-    _min = min;
+void PID::setK( double dt, double max, double min, double Kp, double Ki, double Kd  ){
+    this->_dt = dt;
+    this->_max = max;
+    this->_min = min;
 
-    _Kp = Kp;
-    _Kd = Kd;
-    _Ki = Ki;
+    this->_Kp = Kp;
+    this->_Kd = Kd;
+    this->_Ki = Ki;
 
-    std::cout << "new _Kp: " << _Kp << std::endl;
-}
-
-void PIDImpl::testp(int x) {
-    _Kp = 5.6;
-    std::cout << "new _Kp: " << _Kp << std::endl;
-}
-PIDImpl::~PIDImpl()
-{
+    // Debug
+    std::cout << "setK: Kp" << this->_Kp << endl;
 }
 
 #endif

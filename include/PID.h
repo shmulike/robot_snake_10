@@ -23,7 +23,6 @@
 #ifndef _PID_H_
 #define _PID_H_
 
-class PIDImpl;
 class PID
 {
 public:
@@ -40,11 +39,18 @@ public:
     double calculate( double setpoint, double pv );
     void resetSum();
     void setK(double dt, double max, double min, double Kp, double Ki, double Kd);
-    int test(int);
     ~PID();
 
 private:
-    PIDImpl *pimpl;
+    //PIDImpl *pimpl;
+    double _dt;
+    double _max;
+    double _min;
+    double _Kp;
+    double _Kd;
+    double _Ki;
+    double _pre_error;
+    double _integral;
 };
 
 #endif

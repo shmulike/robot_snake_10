@@ -21,9 +21,7 @@
     </node>
     <node pkg="robot_snake_10" name="gui_v2" type="gui_v2.py" output="screen"/>
 
-
     <node pkg="robot_snake_10" name="controller_v10_4" type="controller_v10_4" output="screen"/>
-
     <!--
     <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui"/>
     -->
