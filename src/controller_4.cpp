@@ -61,9 +61,6 @@ double Kd_tension[N_links_def] = {0.0,0.0,0.0,0.0};
 double MAX_PWM_angle[N_links_def] = {160,160,160,160};
 double MAX_PWM_tension[N_links_def] = {110,100,100,100};
 
-
-//double string_tension[N_links]={1,1.5,1.2,1.8};
-//double string_tension[N_links]={2.5,4.5,3.7,5.5};
 double tension_cmd[N_links_def]={1.5, 1.5, 1.5, 1.5};
 
 
@@ -90,37 +87,30 @@ double signOf (double num);
 void publish_motor_cmd(int motor_cmd[][N_links_def]);
 
 std::stack<clock_t> tictoc_stack;
-
+std::clock_t temp_time=std::clock();
 
 std::clock_t static tic(){ return std::clock(); }
-
 double static toc(std::clock_t start){
-    return ((std::clock() - start ) /((double) CLOCKS_PER_SEC))*1000;}
-
-std::clock_t temp_time=std::clock();
-//std::clock_t time_joint[N_links]={temp_time,temp_time,temp_time,temp_time};
-//std::clock_t time_tension[N_links]={temp_time,temp_time,temp_time,temp_time};
-
+    return ((std::clock() - start ) /((double) CLOCKS_PER_SEC))*1000;
+}
 
 int main(int argc, char **argv)
 {
     std::vector<PID> joint_CTRLA;//(N_links, PID(0,0,0,0,0,0));
     std::vector<PID> joint_CTRLB;//(N_links, PID(0,0,0,0,0,0));
+    std::vector<std::pair<PID, PID>> joints_CTRL;
 
 
+    // Create PID objects
     std::cout <<"create PID" << std::endl;
-
     for (int joint_i = 0; joint_i<N_links; joint_i++){
-        joint_CTRLA.push_back(PID(1.0/150.0, MAX_PWM_angle[joint_i], -MAX_PWM_angle[joint_i], Kp_angle[joint_i], Ki_angle[joint_i], Kd_angle[joint_i]));
-        joint_CTRLB.push_back(PID(1.0/150.0, MAX_PWM_tension[joint_i], -MAX_PWM_tension[joint_i], Kp_tension[joint_i], Ki_tension[joint_i], Kd_tension[joint_i]));
-        //joint_CTRLA[j] = PID(1.0/150.0, MAX_PWM_angle[joint_i], -MAX_PWM_angle[joint_i], Kp_angle[joint_i], Ki_angle[joint_i], Kd_angle[joint_i]);
-        //joint_CTRLB[j] = PID(1,0,0,5.6,0,0);
+        joints_CTRL.push_back({PID(1.0/150.0, MAX_PWM_angle[joint_i], -MAX_PWM_angle[joint_i], Kp_angle[joint_i], Ki_angle[joint_i], Kd_angle[joint_i]),
+                               PID(1.0/150.0, MAX_PWM_tension[joint_i], -MAX_PWM_tension[joint_i], Kp_tension[joint_i], Ki_tension[joint_i], Kd_tension[joint_i])});
     }
 
-    std::cout <<"create PID done" << std::endl;
     ros::init(argc, argv, "controller_4", ros::init_options::NoSigintHandler);
-    std::cout <<"create PID done" << std::endl;
     ros::NodeHandle n;
+    ros::Rate loop_rate(ROS_rate);
     signal(SIGINT, mySigintHandler);
     // -------------------- Publishers --------------------
     pub_motor_cmd = n.advertise<std_msgs::Int32MultiArray>("/robot_snake_4/motor_cmd", 1000);
@@ -130,22 +120,15 @@ int main(int argc, char **argv)
     ros::Subscriber sub_3 = n.subscribe("/robot_snake_1/linear_val",    1000, get_linear_val);
     ros::Subscriber sub_4 = n.subscribe("/robot_snake_1/linear_cmd",    1000, get_linear_cmd);
     ros::Subscriber sub_5 = n.subscribe("/robot_snake_1/tension_val",   1000, get_tension_val);
-    ros::Rate loop_rate(ROS_rate);
+    ROS_WARN("-> Controller node launched !");
+    ROS_WARN("--> Waiting for all nodes to publish !");
 
-    //ROS_WARN("--> Waiting for all nodes to publish !");
     //while (!alive[0]) ROS_INFO("teensy not working %d", alive[0]);
     //while (!alive[1]) ROS_INFO("tension not working %d", alive[1]);
     //while (!alive[0] && !alive[1]);
     //ROS_INFO("-> wait 5 sec");
     //ros::Duration(5, 0).sleep();
-    ROS_WARN("-> Controller node launched !");
 
-    /*
-    for (int j=0; j<1; j++) {
-        joint_CTRLA[j].setK(1.0/150.0, MAX_PWM_angle[j], -MAX_PWM_angle[j], Kp_angle[j], Ki_angle[j], Kd_angle[j]);
-        joint_CTRLB[j].setK(1.0/150.0, MAX_PWM_tension[j], -MAX_PWM_tension[j], Kp_tension[j], Ki_tension[j], Kd_tension[j]);
-    }
-    */
     while (ros::ok())
     {
         if (!alive[0] || !alive[1])
@@ -154,7 +137,7 @@ int main(int argc, char **argv)
                 ROS_ERROR("Waiting for teensy 'Joints' to wake up");
             if (!alive[1])
                 ROS_ERROR("Waiting for teensy 'Tension sensor' to wake up");
-            ros::Duration(2, 0).sleep();
+            ros::Duration(2, 0).sleep();        // wait between checking if Teensy is alive
         }
         else
         {
@@ -162,19 +145,11 @@ int main(int argc, char **argv)
             for (int joint_i=0; joint_i<N_links; joint_i++)
             {
                 // Run on every joint
-                // Set controller PID
+                // String 1 - angle - PID controller
+                motor_cmd[0][joint_i] = joints_CTRL[0].second.calculate(joint_cmd[joint_i], joint_val[joint_i]);
 
-                // String 1 - angle
-                motor_cmd[0][joint_i] = joint_CTRLA[joint_i].calculate(joint_cmd[joint_i], joint_val[joint_i]);
-
-
-                // String 2 - tension
-                motor_cmd[1][joint_i] = joint_CTRLB[joint_i].calculate(tension_cmd[joint_i], tension_val[1][joint_i]);
-
-                //motor_cmd[0][joint_i] = joint_CTRL[joint_i].first.calculate(joint_cmd[joint_i], joint_val[joint_i]);
-                //motor_cmd[0][joint_i] = joint_CTRL[joint_i][0].calculate(joint_cmd[joint_i], joint_val[joint_i]);
-                //motor_cmd[1][joint_i] = joint_CTRL[joint_i][1].calculate(joint_cmd[joint_i], joint_val[joint_i]);
-                //motor_cmd[1][joint_i] = joint_CTRL[joint_i].second.calculate(joint_cmd[joint_i], joint_val[joint_i]);
+                // String 2 - tension - PID controller
+                motor_cmd[1][joint_i] = joints_CTRL[0].second.calculate(tension_cmd[joint_i], tension_val[1][joint_i]);
 
                 if (fabs(joint_val[joint_i])>limit_angle_warn){
                     //joint_CTRL[joint_i].first.resetSum();

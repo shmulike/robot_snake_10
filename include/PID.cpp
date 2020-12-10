@@ -77,7 +77,7 @@ double PID::calculate( double setpoint, double pv )
     this->_pre_error = error;
 
     // Debug
-    std::cout << "calc: Iout" << Iout << endl;
+    //std::cout << "calc: Iout" << Iout << endl;
 //    std::cout << "error: " << error << "\tPout: " << Pout << "\tDout: " << Dout << "\tIout: " << Iout << "\toutput: " << output << endl;
 
 
