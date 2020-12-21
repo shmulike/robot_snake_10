@@ -19,6 +19,7 @@
         <param name="baud" value="115200"/>
         <param name="respawn" value="true"/>
     </node>
+
     <node pkg="robot_snake_10" name="gui_v2" type="gui_v2.py" output="screen"/>
 
     <!--

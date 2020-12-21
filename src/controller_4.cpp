@@ -26,9 +26,9 @@
 using namespace std;
 
 
-#define ROS_rate 150
+#define ROS_rate 150.0
 //#define N_string 2              // In single joints
-#define N_links 2               // Number of controlled joints
+#define N_links 4               // Number of controlled joints
 #define N_links_def 4           // Total number of joints in the system
 #define N_tensions N_links*2    // Number of strings (2 for each joints)
 #define N_motors N_links*2      // Number of motors (2 for each joints)
@@ -50,18 +50,18 @@ using namespace std;
 
 
 
-double Kp_angle[N_links_def] = {25,20,15,20};
-double Ki_angle[N_links_def] = {200 ,80 ,80 ,80 };
-double Kd_angle[N_links_def] = {0.0,0.0,0.0,0.0};
+double Kp_angle[N_links_def] = {25,20,25,20};
+double Ki_angle[N_links_def] = {100 ,20 ,80 ,80 };
+double Kd_angle[N_links_def] = {0.0,2.0,0.0,0.0};
 
-double Kp_tension[N_links_def] = {100,100,100,100};
-double Ki_tension[N_links_def] = {200 ,80 ,80 ,80 };
-double Kd_tension[N_links_def] = {0.0,0.0,0.0,0.0};
+double Kp_tension[N_links_def] = {40, 20 ,50,30};
+double Ki_tension[N_links_def] = {200 ,20 ,80 ,40 };
+double Kd_tension[N_links_def] = {0.0,2.0,0.0,0.0};
 
-double MAX_PWM_angle[N_links_def] = {160,160,160,160};
-double MAX_PWM_tension[N_links_def] = {110,100,100,100};
+double MAX_PWM_angle[N_links_def] = {200,200,200,200};
+double MAX_PWM_tension[N_links_def] = {160,160,160,160};
 
-double tension_cmd[N_links_def]={1.5, 1.5, 1.5, 1.5};
+double tension_cmd[N_links_def]={1.5, 2.5, 1.5, 2.5};
 
 
 double joint_val[N_links_def]={0}, joint_cmd[N_links_def]={0};
@@ -96,16 +96,16 @@ double static toc(std::clock_t start){
 
 int main(int argc, char **argv)
 {
-    std::vector<PID> joint_CTRLA;//(N_links, PID(0,0,0,0,0,0));
-    std::vector<PID> joint_CTRLB;//(N_links, PID(0,0,0,0,0,0));
+    //std::vector<PID> joint_CTRLA;//(N_links, PID(0,0,0,0,0,0));
+    //std::vector<PID> joint_CTRLB;//(N_links, PID(0,0,0,0,0,0));
     std::vector<std::pair<PID, PID>> joints_CTRL;
 
 
     // Create PID objects
     std::cout <<"create PID" << std::endl;
     for (int joint_i = 0; joint_i<N_links; joint_i++){
-        joints_CTRL.push_back({PID(1.0/150.0, MAX_PWM_angle[joint_i], -MAX_PWM_angle[joint_i], Kp_angle[joint_i], Ki_angle[joint_i], Kd_angle[joint_i]),
-                               PID(1.0/150.0, MAX_PWM_tension[joint_i], -MAX_PWM_tension[joint_i], Kp_tension[joint_i], Ki_tension[joint_i], Kd_tension[joint_i])});
+        joints_CTRL.push_back({PID(1.0/ROS_rate, MAX_PWM_angle[joint_i], -MAX_PWM_angle[joint_i], Kp_angle[joint_i], Ki_angle[joint_i], Kd_angle[joint_i]),
+                               PID(1.0/ROS_rate, MAX_PWM_tension[joint_i], -MAX_PWM_tension[joint_i], Kp_tension[joint_i], Ki_tension[joint_i], Kd_tension[joint_i])});
     }
 
     ros::init(argc, argv, "controller_4", ros::init_options::NoSigintHandler);
@@ -146,14 +146,12 @@ int main(int argc, char **argv)
             {
                 // Run on every joint
                 // String 1 - angle - PID controller
-                motor_cmd[0][joint_i] = joints_CTRL[0].second.calculate(joint_cmd[joint_i], joint_val[joint_i]);
+                motor_cmd[0][joint_i] = joints_CTRL[joint_i].first.calculate(joint_cmd[joint_i], joint_val[joint_i]);
 
                 // String 2 - tension - PID controller
-                motor_cmd[1][joint_i] = joints_CTRL[0].second.calculate(tension_cmd[joint_i], tension_val[1][joint_i]);
+                motor_cmd[1][joint_i] = joints_CTRL[joint_i].second.calculate(tension_cmd[joint_i], tension_val[1][joint_i]);
 
                 if (fabs(joint_val[joint_i])>limit_angle_warn){
-                    //joint_CTRL[joint_i].first.resetSum();
-                    //joint_CTRL[joint_i].second.resetSum();
                     ROS_WARN("-> Joint #%d - angle got to its limit: %.2lf",joint_i, joint_val[joint_i]);
                     if (fabs(joint_val[joint_i])>limit_angle_error){
                         motor_cmd[0][joint_i] = -MAX_PWM_angle[N_links]*signOf(joint_val[joint_i]);
@@ -162,19 +160,21 @@ int main(int argc, char **argv)
                     }
                 }
 
+                // For each string in joint-i
                 for (int j=0; j<2; j++){
+                    // If tension if bigger than MAX limit -> stop pulling, release opposite string
                     if (tension_val[j][joint_i]>limit_max_tension){
                         motor_cmd[0][joint_i] = 0;
                         motor_cmd[1][joint_i] = -MAX_PWM_tension[j];
-                        ROS_FATAL("String #%d - string got to its max limit: %.2lf",2*joint_i+j,tension_val[j][joint_i]);
+                        ROS_FATAL("J%d - String #%d - tension got to its max limit: %.2lf",joint_i, 2*joint_i+j,tension_val[j][joint_i]);
                     }
+                    // If tension if smaller than MIN limit -> pull
                     else if(tension_val[j][joint_i]<limit_min_tension)
                     {
                         motor_cmd[1][joint_i] =  MAX_PWM_tension[j];
-                        ROS_FATAL("String #%d - string got to its min limit: %.2lf",2*joint_i+j,tension_val[j][joint_i]);
+                        ROS_FATAL("J%d - String #%d - tension got to its min limit: %.2lf",joint_i, 2*joint_i+j,tension_val[j][joint_i]);
                     }
                 }
-
                 // ---------- End check limits
 
                 //ROS_INFO("Joint #%d:\tPos/cmd= %.3f/%.1f;\tPWM=[%d,%d];\tT1= %.2f;\tT2= %.2f\tE_sum=%.2f\tkP=%.2f\tE_sum=%.2f\tkP=%.2f",joint_i, joint_val[joint_i],joint_cmd[joint_i], motor_cmd[0][joint_i], motor_cmd[1][joint_i], tension_val[0][joint_i], tension_val[1][joint_i],joint_error_sum[joint_i],joint_error[joint_i]*Kp_angle[joint_i],tension_error[1][joint_i]*Kp_tension , tension_error_sum[1][joint_i]);
@@ -208,7 +208,6 @@ void get_joint_cmd(const std_msgs::Float32MultiArray::ConstPtr& msg){
     for (int i=0; i<N_links; i++){
         //joint_cmd[i] = msg->data[i];
         joint_cmd[i] = double(msg->data[i]);
-        std::cout<<joint_cmd[i]<<std::endl;
     }
 }
 
