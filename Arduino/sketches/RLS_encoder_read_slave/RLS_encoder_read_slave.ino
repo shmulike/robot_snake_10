@@ -9,17 +9,21 @@
 
 //=====[ Constants ]========================================
 //#define slave_1 8
+#define PRINT 0
+
 //=====[ VARIABLES ]============================================================
 RLS_Encoder enc;
 float value = 0;
-uint8_t slave_1 = 0x66;
+uint8_t slave_1 = 0x64;
 
 //=====[ Function declaraion ]========================================
 void requestEvent();
 
 //=====[ SETUP ]================================================================
 void setup() {
-  //Serial.begin(115200); while(!Serial);
+  if(PRINT)
+    Serial.begin(115200); while(!Serial);
+  
   enc.begin(); delay(5);
   enc.set_read(); delay(5);
   Wire.begin(I2C_SLAVE, slave_1, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
@@ -30,6 +34,8 @@ void setup() {
 
 //=====[ LOOP ]=================================================================
 void loop() {
+  if(PRINT)
+    Serial.println(enc.get_pos());
   delay(2);
 }
 //==============================================================================

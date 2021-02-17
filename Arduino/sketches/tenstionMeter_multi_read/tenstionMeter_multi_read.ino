@@ -12,7 +12,7 @@
 
 //=====[ Constants ]========================================
 #define PRINT 1
-#define N_joints 4
+#define N_joints 5
 #define CLK 11      // clock pin to the load cell amp
 #define DOUT1 A0    // data pin to the first lca
 #define DOUT2 A1    // data pin to the second lca
@@ -22,18 +22,20 @@
 #define DOUT6 A5    // data pin to the third lca
 #define DOUT7 A6    // data pin to the third lca
 #define DOUT8 A7    // data pin to the third lca
+#define DOUT9 A8    // data pin to the third lca
+#define DOUT10 A9    // data pin to the third lca
 #define BOOT_MESSAGE "MIT_ML_SCALE V0.8"
 #define d_count 1000
 //#define CHANNEL_COUNT sizeof(DOUTS)/sizeof(byte)
 
-#define N_tensions 8
+#define N_tensions 10
 long count = 0;
 unsigned long startTime, endTime;
 
 //=====[ VARIABLES ]=========================================
 ros::NodeHandle nh;
-byte DOUTS[N_tensions] = {DOUT1, DOUT2, DOUT3, DOUT4, DOUT5, DOUT6, DOUT7, DOUT8};
-int tension_order[N_tensions] = {1, 2, 3, 4, 5, 6, 7, 8};
+byte DOUTS[N_tensions] = {DOUT1, DOUT2, DOUT3, DOUT4, DOUT5, DOUT6, DOUT7, DOUT8, DOUT9, DOUT10};
+int tension_order[N_tensions] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 int k;
 long int result[N_tensions];
@@ -50,7 +52,9 @@ ros::Publisher pub_tensions("/robot_snake_1/tension_val", &tension_val);
                               {0.00000000, 3.43E-5, -1.8389},
                               {0.00000000, 3.25E-5, 4.6884},
                               {0.00000000, 3.44E-5, 7.9783},
-                              {0.00000000, 3.41E-5, 0.3253}};
+                              {0.00000000, 3.41E-5, 0.3253},
+                              {0.00000000, 3.51E-5, -0.4163},
+                              {0.00000000, 3.76E-5, 11.2153}};
                      
 //=====[ SETUP ]=============================================
 void setup() {

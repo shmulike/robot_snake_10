@@ -20,6 +20,7 @@ public:
     // Returns the manipulated variable given a setpoint and current process value
     double calculate( double setpoint, double pv );
     void resetSum();
+    double getsum ();
     void setK(double dt, double max, double min, double Kp, double Ki, double Kd);
     ~PID();
 

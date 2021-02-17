@@ -9,7 +9,8 @@
 #include <std_msgs/Float32MultiArray.h>
 #include <i2c_t3.h>
 #define PRINT 1
-#define N_links 4
+#define N_links 6
+#define N_links_read 2
 
 //=====[ Constants ]========================================
 
@@ -24,8 +25,10 @@ std_msgs::Float32MultiArray joint_ang;
 ros::Publisher pub_joints("/robot_snake_10/joint_val", &joint_ang);
 int count=0;
 //uint8_t slave_add[N_links-1] = {100, 101, 102};
-uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66};
-float joint_offset[] = {40.0, 44.0, 206.0, 44.0};
+uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66, 0x67, 0x68};
+float joint_offset[] = {40.0, 44.0, 34.176, 44.0, 0.0};
+//uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c};
+//float joint_offset[] = {40.0, 44.0, 34.176, 44.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 union u_tag{
     byte b[4];
@@ -83,7 +86,7 @@ void loop() {
     // Read others encoder position
     arr[0] = wrapTo180(enc.get_pos()-joint_offset[0]);
     
-    for (int i=1; i<N_links; i++){                      // Loop to run on every slave
+    for (int i=1; i<N_links_read; i++){                      // Loop to run on every slave
       Wire.requestFrom(slave_add[i-1], sizeof(data));   // request slave data
       if(Wire.getError()){                              // if error in recieving data from slave
         Serial.print("--Wire Error: ");                 // print the error
@@ -106,7 +109,7 @@ void loop() {
   
   // print Encoder values
   if (PRINT){
-    for (int i=0; i<N_links; i++){
+    for (int i=0; i<N_links_read; i++){
       Serial.print("val ");
       Serial.print(i+1);
       Serial.print(": ");

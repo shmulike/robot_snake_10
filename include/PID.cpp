@@ -68,7 +68,9 @@ double PID::calculate( double setpoint, double pv )
 void PID::resetSum(){
     this->_integral = 0;
 }
-
+double PID :: getsum(){
+    return _integral;
+}
 void PID::setK( double dt, double max, double min, double Kp, double Ki, double Kd  ){
     this->_dt = dt;
     this->_max = max;
