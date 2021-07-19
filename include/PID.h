@@ -23,6 +23,8 @@ public:
     double getsum ();
     void setK(double dt, double max, double min, double Kp, double Ki, double Kd);
     ~PID();
+    double Iout;
+    double Pout;
 
 private:
     //PIDImpl *pimpl;

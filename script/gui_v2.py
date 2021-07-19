@@ -9,7 +9,7 @@ from std_msgs.msg import Float32MultiArray, Int32MultiArray
 
 _max_PWM = 256
 _max_angle = 30
-_N_joints = 4
+_N_joints = 10
 _N_string = _N_joints * 2
 
 class APP:

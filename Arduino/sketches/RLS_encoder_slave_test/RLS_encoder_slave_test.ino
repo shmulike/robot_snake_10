@@ -1,37 +1,62 @@
+//==============================================================================
+//Shmulik Edelman
+//shmulike@post.bgu.ac.il
+//==============================================================================
 
+//=====[ INCULDE ]==============================================================
+#include "RLS_Encoder.h"
 #include <i2c_t3.h>
 
-// Function prototypes
-void requestEvent(void);
-
+//=====[ Constants ]========================================
+//#define slave_1 8
+//=====[ VARIABLES ]============================================================
+RLS_Encoder enc;
 float value = 0;
 uint8_t slave_1 = 0x64;
 
-void setup()
-{
-    pinMode(LED_BUILTIN, OUTPUT); // LED
+//=====[ Function declaraion ]========================================
+void requestEvent();
 
-    Wire.begin(I2C_SLAVE, slave_1, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
-    Wire.onRequest(requestEvent);
-    Serial.begin(115200);
-    while(!Serial);
-    value = 0;
+//=====[ SETUP ]================================================================
+void setup() {
+  //Serial.begin(115200); while(!Serial);
+  enc.begin(); delay(5);
+  //enc.set_read(); delay(5);
+  Wire.begin(I2C_SLAVE, slave_1, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
+  delay(10);
+  Wire.onRequest(requestEvent);
+  value = 0;
 }
 
-void loop()
-{
-  delay(50);
-  Serial.println("waiting ..");
-}
-
-void requestEvent(void)
-{
-  Serial.println("Send !");
-  //digitalWrite(LED_BUILTIN, HIGH); delay(200);
-  //digitalWrite(LED_BUILTIN, LOW);
+//=====[ LOOP ]=================================================================
+void loop() {
   
-  value += 0.01;
+  Serial2.flush();
+  while (Serial2.available()){
+    value = enc.get_pos();
+    Serial.println(value,3);
+    break;
+  }
+  /*
+  value = enc.get_pos();
+  Serial.println(value,3);
+  */
+  delay(5);
+}
+//==============================================================================
 
+void requestEvent(){      
+  //digitalWrite(13,HIGH); delay(100);
+  //digitalWrite(13,LOW);  delay(100);
+  
+  Serial2.flush();
+  // Read first=this encoder position
+  while (Serial2.available()){
+    //if (Serial2.read()=='1'){
+      value = enc.get_pos();
+      break;
+    //}
+    }
   byte *data = (byte *)&value;
   Wire.write(data[0]);
   Wire.write(data[1]);

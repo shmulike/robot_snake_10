@@ -10,7 +10,7 @@
 //=====[ Constants ]========================================
 
 #define CLK 11      // clock pin to the load cell amp
-#define DOUT A6    // data pin to the first lca
+#define DOUT A3    // data pin to the first lca
 #define calib_mat_row 0
 
 #define BOOT_MESSAGE "MIT_ML_SCALE V0.8"
@@ -22,22 +22,25 @@
 
 long int val_raw;
 double val;
-HX711 scale(DOUT, CLK);
+HX711 scale;
 
-double P[8][3] = {{0.00000000, 0.00002348, 1.47896687},
-                              {0.00000000, 0.00002385, 2.88188982},
-                              {0.00000000, 0.00002414, 1.27118260},
-                              {0.00000000, 0.00002028,-4.84178993},
-                              {0.00000000, 0.00002322, 3.38832415},
-                              {0.00000000, 0.00002559, 4.95853685},
-                              {0.00000000, 0.00002408, 6.59883064},
-                              {0.00000000, 0.00002436, 1.13493471}};
+double P[8][3] ={{0.00000000, 3.32E-5, 2.9418},
+                              {0.00000000, 3.35E-5, 4.3512},
+                              {0.00000000, 3.31E-5, 5.2857},
+                              {0.00000000, 3.31E-5, -6.6821},
+                              {0.00000000, 3.43E-5, -1.8389},
+                              {0.00000000, 3.25E-5, 4.6884},
+                              {0.00000000, 3.44E-5, 7.9783},
+                              {0.00000000, 3.41E-5, 0.3253}};
                      
 //=====[ SETUP ]=============================================
 void setup() {
   Serial.begin(115200);
   while(!Serial);
   Serial.println("Serial Communication started");
+
+  scale.begin(DOUT,CLK);
+  
 
 }
 
@@ -51,5 +54,5 @@ void loop() {
   Serial.print("\tKg: ");
   Serial.println(val,3);
 
-  delay(2);
+  delay(13);
 }

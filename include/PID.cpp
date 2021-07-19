@@ -33,13 +33,13 @@ double PID::calculate( double setpoint, double pv )
     // Calculate error
     double error = setpoint - pv;
     // Proportional term
-    double Pout = _Kp * error;
+    this->Pout = _Kp * error;
     // Integral term
     if (_pre_error / error < 0)
         _integral = 0;          // Clamping
     else
         _integral += error * _dt;
-    double Iout = _Ki * _integral;
+    this->Iout = _Ki * _integral;
 
     // Derivative term
     double derivative = (error - _pre_error) / _dt;
