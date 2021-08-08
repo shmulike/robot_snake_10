@@ -13,7 +13,7 @@
 //=====[ VARIABLES ]============================================================
 RLS_Encoder enc;
 float value = 0;
-uint8_t slave_1 = 0x69;
+uint8_t slave_1 = 0x68;
 
 //=====[ Function declaraion ]========================================
 void requestEvent();
@@ -24,7 +24,7 @@ void setup() {
     //Serial.begin(115200); while(!Serial);
   
   enc.begin(); delay(5);
-  enc.set_read(); delay(5);
+  // enc.set_read(); delay(5);
   Wire.begin(I2C_SLAVE, slave_1, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
   delay(10);
   Wire.onRequest(requestEvent);

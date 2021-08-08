@@ -25,7 +25,7 @@ class thread_state(Enum):
 
 max_PWM = 255
 max_JOINT = 30
-N_links = 6
+N_links = 7
 N_joints = N_links
 N_motor_each = 2
 N_motor = N_links * N_motor_each

@@ -10,7 +10,7 @@
 #include <i2c_t3.h>
 #define PRINT 1
 #define N_links 10
-#define N_links_read 6
+#define N_links_read 7
 
 //=====[ Constants ]========================================
 
@@ -27,7 +27,7 @@ int count = 0;
 //uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c};
 //float joint_offset[] = {40, 44.0, 34.176, 44.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 uint8_t slave_add[N_links - 1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69 , 0x6a, 0x6b, 0x6c};
-float joint_offset[N_links - 1] = {44, 50.0, 317.0, 49.2, 49.0, 50.0, 0.0, 0.0, 0.0};
+float joint_offset[N_links - 1] = {44, 50.0, 320.0, 48.2, 51.0, 46.0, 37.87, 0.0, 0.0};
 //uint8_t slave_add[N_links-1] = { 0x69, 0x6a, 0x6b, 0x6c};
 //float joint_offset[] = { 0.0, 0.0, 0.0, 0.0};
 /*
@@ -148,7 +148,7 @@ void loop() {
   pub_joints.publish(&joint_ang);
   nh.spinOnce();
 
-  delay(9);
+  delay(10);
 }
 //==============================================================================
 
