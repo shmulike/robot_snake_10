@@ -21,12 +21,12 @@
 #define sinAmp1 25
 #define N_links 10
 #define PI 3.14159265
-#define step 8000.0
 #define step_factor 6.0
 #define dtheta 360.0/50000000.0
 #define max_angle 5.0
 #define deg2rad  PI/180.0
 #define max_move 200
+#define N_steps 10000
 
 // -------------------- Global variables --------------------
 
@@ -68,16 +68,6 @@ int main(int argc, char **argv)
     using std::chrono::milliseconds;
     using std::chrono::system_clock;
     
-
- 
-
-/*
-    arr[0] = 0;
-    arr[1] = 0;
-    arr[2] = 0;
-    arr[3] = 0;
-    arr[4] = 0;
-    */
     joint_cmd_array.data.clear();
     linear_move.data = 0.0;
 
@@ -93,7 +83,7 @@ int main(int argc, char **argv)
 
     //ros::spinOnce();
     loop_rate.sleep();
-    ros::Duration(10, 0).sleep();
+    ros::Duration(1, 0).sleep();
     ROS_WARN("\tStarting");
     
 
@@ -101,8 +91,25 @@ int main(int argc, char **argv)
     auto start = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); // start time
     auto now = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); //time right now
     double Time_period = (double)120.0*pow(10,3); // time of one feriod in milisecsec
+    double linear_mat[N_steps] = {0.0};
+    double angle_mat[10][N_steps] = {0.0};
+    double angle_final[]={-1,0,-1,0,-1,-2,-1,-2,-1,0};
+    double linear_final = 150.0;
+    int step = 0;
 
-    
+    // Creating joint and linear commands
+    for (int joint=0; joint<10; joint++)
+        for (int i=0; i<N_steps; i++)
+        {
+            double dangle = angle_final[joint]/N_steps;
+            angle_mat[joint][i] = double(dangle*i);
+        }
+    for (int i=0; i<N_steps; i++)
+        {
+        double dlinear = linear_final/N_steps;
+        linear_mat[i] = double(dlinear*i);
+        }
+
     while (ros::ok())
     {
         
@@ -117,77 +124,28 @@ int main(int argc, char **argv)
         {
             if (flag==1)
             {
-                //ROS_INFO("flag 1");
-                //linear_move.data= 0.0;
-                //pub_2.publish(linear_move);    
-                start = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); // start time 
-                now = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); //update the time right now
+
                 flag=2;
 
             }
         
-        //ROS_INFO("start sin");
-        //ROS_INFO("flag 2");
-        now = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); //update the time right now
-        double cmd_ang = max_angle*sin(1.0/Time_period*2*PI*(now-start)); // calculate the angel from SIN function
-        double cmd_linear = max_move*abs(sin(1.0/Time_period*2*PI*(now-start))); // calculate the angel from SIN function
-        //ROS_INFO("now: %ld\tjoint_i: %d\tcmd:%lf", now-start, joint_i ,cmd_ang);
+        
+        //double cmd_linear = max_move*abs(sin(1.0/Time_period*2*PI*(now-start))); // calculate the angel from SIN function
         joint_cmd_array.data.clear();
-        //ROS_INFO("\tcmd_linear %lf",cmd_linear );
-
-        
-        for (int i=0; i<N_links; i++){
-            if (joint_i==i){
-             joint_cmd_array.data.push_back(cmd_ang);
-                /*
-            if(joint_i==i-1)
-                joint_cmd_array.data.push_back(cmd_ang);
-            if(joint_i==i-2)
-                joint_cmd_array.data.push_back(cmd_ang);
-               */ 
-            }
-            else
-                joint_cmd_array.data.push_back(0.0);
+        for (int joint=0; joint<N_links; joint++){
+            joint_cmd_array.data.push_back(angle_mat[joint][step]);
         }
-        
+        linear_move.data=  linear_mat[step];
+        if (step<N_steps-1)
+        {
+            step+=1;
+            ROS_WARN("Step NO.:%d", step);
+        }
         pub_1.publish(joint_cmd_array);
-        
-        linear_move.data= cmd_linear;
-        //ROS_INFO("\tcmd_linear %lf",linear_move.data );
         pub_2.publish(linear_move);     
             
-            if (now-start>=Time_period){
-                start = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count(); //if one sine wave ended update the start time
-                joint_i++; // mobe to the next JOINT
-                if (joint_i==N_links){
-                    for (int i=0; i<N_links; i++)
-                        joint_cmd_array.data.push_back(0.0);
-                    pub_1.publish(joint_cmd_array);
-                    break;
-                }
-            }
-
-
         }
 
-
-        //else{ROS_INFO("\t Homing..." );  }
-         
-  
-            /*
-        if (now-start>=Time_period) 
-            for (int i = 0; i<N_links; i++){
-                if (i%2) // Go on even joints 0 2 4 6
-                    joint_cmd_array.data.push_back(0.0);
-                else // Go on odd joints 1 3 5 7
-                    joint_cmd_array.data.push_back(cmd_ang + i*0.2);
-            }
-        else
-            for (int i=0; i<N_links; i++)
-                joint_cmd_array.data.push_back(0.0);
-        
-        pub_1.publish(joint_cmd_array);
-        */
         ros::spinOnce();
         loop_rate.sleep();
     }

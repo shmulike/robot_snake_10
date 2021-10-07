@@ -27,8 +27,8 @@ using namespace std;
 
 #define ROS_rate 150.0
 //#define N_string 2              // In single joints
-#define N_links 7          // Number of controlled joints
-#define N_links_def 7         // Total number of joints in the system
+#define N_links 10          // Number of controlled joints
+#define N_links_def 10         // Total number of joints in the system
 #define N_tensions N_links*2    // Number of strings (2 for each joints)
 #define N_motors N_links*2      // Number of motors (2 for each joints)
 #define eps_angle 0.06
@@ -49,18 +49,19 @@ using namespace std;
 
 
 
-double Kp_angle[N_links_def] = {25, 35, 50, 35, 50,50, 50};
-double Ki_angle[N_links_def] = {100 ,35 ,20 ,4, 5,5, 5};
-double Kd_angle[N_links_def] = {0.0,2.0,2.0,3.0, 2.0, 3.0, 3.0};
+double Kp_angle[N_links_def] = {25, 35, 50, 35, 50,50, 50, 50, 70, 50};
+double Ki_angle[N_links_def] = {100 ,35 ,20 ,4, 5,5, 5, 5, 7, 5};
+double Kd_angle[N_links_def] = {0.0,2.0,2.0,3.0, 2.0, 3.0, 3.0, 3.0, 3.0, 3.0};
 
-double Kp_tension[N_links_def] = {40 ,5 ,24 ,5, 2,7, 7};
-double Ki_tension[N_links_def] = {200, 0.3 , 0.9, 0.5 ,0.4,0.3, 0.4};
-double Kd_tension[N_links_def] = {0.0,2.0,0.0,0.5,0.5, 0.0, 0.5};
+double Kp_tension[N_links_def] = {40 ,5 ,24 ,5, 2,7, 7, 7, 7, 7};
+double Ki_tension[N_links_def] = {200, 0.3 , 0.9, 0.5 ,0.4,0.3, 0.4, 0.3, 0.4, 0.3};
+double Kd_tension[N_links_def] = {0.0,2.0,0.0,0.5,0.5, 0.0, 0.5, 0.0, 0.5, 0.0};
 
-double MAX_PWM_angle[N_links_def] = {200,200,200,200,200,200,200};
-double MAX_PWM_tension[N_links_def] = {160,160,160,160,160,160,160};
+double MAX_PWM_angle[N_links_def] = {200,200,200,200,200,200,200, 200, 200, 200};
+double MAX_PWM_tension[N_links_def] = {160,160,160,160,160,160,160, 160, 160, 160};
+double MAX_PWM_tension_fix[N_links_def] = {165,165,165,165,165,165,165, 165, 165, 165};
 
-double tension_cmd[N_links_def]={1.5, 1.5, 1.5, 1.5,1.5,1.5, 1.5};
+double tension_cmd[N_links_def]={0.5, 1.5, 0.5, 1.5,0.5,1.5, 0.5, 1.5, 0.5, 1.5};
 
 
 double joint_val[N_links_def]={0}, joint_cmd[N_links_def]={0};
@@ -310,8 +311,6 @@ double signOf (double num){
         return 1;
     return -1;
 }
-
-
 
 /*
 #include "ros/ros.h"

@@ -1,7 +1,7 @@
 #include <ros.h>
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Int32.h>
-#define N_links 7
+#define N_links 10
 #define PRINT 0
 //-------------------- Methods
 void set_motor_pwm(const std_msgs::Int32MultiArray& msg);
@@ -15,8 +15,8 @@ ros::Subscriber<std_msgs::Int32MultiArray> sub("/robot_snake_4/motor_cmd", &set_
 //byte motors_DIR_pin[N_links*2] = {0,1,27,24,25,26,12,11};
 //byte motors_PWM_pin[N_links*2] = {2,3,4,5,6,7,8,9,10,29,30,35,36,37,38,14,16,17,20,21};    
 //byte motors_DIR_pin[N_links*2] = {0,1,11,12,24,25,26,27,28,31,32,33,34,39,13,15,18,19,22,23};
-byte motors_PWM_pin[N_links*2] = {2,3,4,5,6,7,8,9,10,29,30,35,36,37};    
-byte motors_DIR_pin[N_links*2] = {0,1,11,12,24,25,26,27,28,31,32,33,34,39};
+byte motors_PWM_pin[N_links*2] = {2,3,4,5,6,7,8,9,10,29,30,35,36,37, 38, 14, 16, 17, 20, 21};    
+byte motors_DIR_pin[N_links*2] = {0,1,11,12,24,25,26,27,28,31,32,33,34,39, 13, 15, 18, 19, 22, 23};
 //
 //-------------------- Setup function
 void setup() {

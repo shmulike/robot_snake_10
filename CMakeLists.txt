@@ -225,3 +225,7 @@ target_link_libraries(joint_cmd_v10_tester ${catkin_LIBRARIES} )
 add_executable(move_v10_tester src/move_test_1.cpp)
 add_dependencies(move_v10_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(move_v10_tester ${catkin_LIBRARIES} )
+
+add_executable(move_v10_tester_2 src/move_test_2.cpp)
+add_dependencies(move_v10_tester_2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(move_v10_tester_2 ${catkin_LIBRARIES} )

@@ -13,7 +13,7 @@
 //=====[ VARIABLES ]============================================================
 RLS_Encoder enc;
 float value = 0;
-uint8_t slave_1 = 0x68;
+uint8_t slave_1 = 0x64;
 
 //=====[ Function declaraion ]========================================
 void requestEvent();
@@ -34,7 +34,7 @@ void setup() {
 //=====[ LOOP ]=================================================================
 void loop() {
   if(PRINT)
-    Serial.println(enc.get_pos());
+    Serial.println(enc.get_pos(),3);
   delay(2);
 }
 //==============================================================================

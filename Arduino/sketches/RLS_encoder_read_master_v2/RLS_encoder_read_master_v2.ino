@@ -10,7 +10,7 @@
 #include <i2c_t3.h>
 #define PRINT 1
 #define N_links 10
-#define N_links_read 7
+#define N_links_read 10
 
 //=====[ Constants ]========================================
 
@@ -20,14 +20,14 @@ RLS_Encoder enc;
 ros::NodeHandle nh;
 byte data[4] = {0};
 //int value = 0;
-float arr[N_links] = {0.0};
+float arr[N_links] = {0.0}, val_previus = 0.0;
 std_msgs::Float32MultiArray joint_ang;
 ros::Publisher pub_joints("/robot_snake_10/joint_val", &joint_ang);
 int count = 0;
 //uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c};
 //float joint_offset[] = {40, 44.0, 34.176, 44.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 uint8_t slave_add[N_links - 1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69 , 0x6a, 0x6b, 0x6c};
-float joint_offset[N_links - 1] = {44, 50.0, 320.0, 48.2, 51.0, 46.0, 37.87, 0.0, 0.0};
+float joint_offset[N_links] = {58, 35.0, 317.0, 53.2, 51.0, 49.0, 39.87, 44.0, 134.0, 314.0};
 //uint8_t slave_add[N_links-1] = { 0x69, 0x6a, 0x6b, 0x6c};
 //float joint_offset[] = { 0.0, 0.0, 0.0, 0.0};
 /*
@@ -64,7 +64,7 @@ void setup() {
   nh.initNode();
   nh.advertise(pub_joints);
   joint_ang.data_length = N_links;
-  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
+  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 200000);
   //Wire.setDefaultTimeout(250000); // 10ms default timeout
 }
 
@@ -115,7 +115,9 @@ void loop() {
           converter.buffer[i] = Wire.read();
         }
         //Serial.print(converter.encReading);
+        
         arr[i] = wrapTo180(converter.encReading - joint_offset[i]);   // Convert angle to [-180,180]
+
         //arr[i] = wrapTo180(converter.encReading);     // Convert angle to [-180,180]
 
 

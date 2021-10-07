@@ -10,7 +10,7 @@
 //=====[ Constants ]========================================
 
 #define CLK 11      // clock pin to the load cell amp
-#define DOUT A3    // data pin to the first lca
+#define DOUT 26    // data pin to the first lca
 #define calib_mat_row 0
 
 #define BOOT_MESSAGE "MIT_ML_SCALE V0.8"
@@ -47,12 +47,12 @@ void setup() {
 //=====[ LOOP ]==============================================
 void loop() {
   val_raw = scale.read();                // Read raw data from all the tension-meters
-  val = P[calib_mat_row][0]*pow(val_raw, 2) + P[calib_mat_row][1]*val_raw + P[calib_mat_row][2];
+//  val = P[calib_mat_row][0]*pow(val_raw, 2) + P[calib_mat_row][1]*val_raw + P[calib_mat_row][2];
 
-  Serial.print("Raw: ");
-  Serial.print(val_raw);
-  Serial.print("\tKg: ");
-  Serial.println(val,3);
+  //Serial.print("Raw: ");
+  Serial.println(val_raw);
+  //Serial.print("\tKg: ");
+  //Serial.println(val,3);
 
   delay(13);
 }

@@ -33,7 +33,7 @@
 #define DOUT17 A18
 #define DOUT18 A19
 #define DOUT19 A20
-#define DOUT20 A21
+#define DOUT20 25
 #define BOOT_MESSAGE "MIT_ML_SCALE V0.8"
 #define d_count 1000
 //#define CHANNEL_COUNT sizeof(DOUTS)/sizeof(byte)
