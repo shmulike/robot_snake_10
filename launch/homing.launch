@@ -1,7 +1,9 @@
 <launch>
 
 <group ns="sin_controller">
-    <arg name="record" default="true"/>
+
+     <arg name="record" default="false"/>
+
 
  
     <node pkg="rosserial_python" type="serial_node.py" name="serial_joint_node">
@@ -30,13 +32,11 @@
     </node>
 
         <!-- command that generates SIN pattern -->
-
-   <group >
-        <node pkg="robot_snake_10" name="move_v10_tester_2" type="move_v10_tester_2" output="screen"/>
+    <group >
+        <node pkg="robot_snake_10" name="homing_controller" type="homing_controller" output="screen"/>
 	    <node pkg="robot_snake_10" name="controller_v10_4" type="controller_v10_4" output="screen"/>  
     </group>
     
-
     <group if="$(arg record)">
         <!-- stuff that will only be evaluated if foo is true -->
         <node pkg="rosbag" type="record" name="my_rosbag" output="screen" args="-a -o $(find robot_snake_10)/bags/"/>

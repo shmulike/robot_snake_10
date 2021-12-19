@@ -1,13 +1,15 @@
 ///////   31.5.2021
-    ///PID controller for platform movment on Lead Screw Rail.
-
+///PID controller for platform movment on Lead Screw Rail.
 
 #include <ros.h>
 #include <std_msgs/Float32.h>
-#include <std_msgs/Int32.h>
-#include <std_msgs/Bool.h>
- 
+#include <std_msgs/Int32.h> 
 #include <Encoder.h>
+#include <std_srvs/SetBool.h>
+#include <std_msgs/Bool.h> 
+//#include <rosserial_arduino/Test.h>
+
+
 #define E_max 80
 #define PWM_MAX 255
 #define PWM_MAX_HOMING 100
@@ -16,30 +18,36 @@
 #define maxRailLength 790
 #define lastMessageOk 500 // millisec
 
+
 static const float TIC_TO_MM = 94.3648;
 //pin decleration//
 static const int HOME_MS_PIN = 6;   // back microswitch pin.
 static const int LIM_MS_PIN = 8;   // front microswitch pin.
 static const int PWM_PIN = 23;
 static const int DIR_PIN = 22;    // LOW=forward, HIGH=backward.
+bool doneHH=false;
+bool  homing_status_linear;
 
+ros::NodeHandle nh;
+using std_srvs::SetBool;
+//using rosserial_arduino::Test;
 
 //func decleration//
 void homing();
 void set_linear_cmd(const std_msgs::Float32& msg);
-void status_linear_homing(const std_msgs::Float32& msg);
 void LED_blink();
+bool callback(SetBool::Request &req, SetBool::Response &res);
 ///////////////////
-
-//=====[ VARIABLES ]============================================================
-ros::NodeHandle nh;
 
 std_msgs::Int32 homing_status;
 
 ros::Publisher pub("/robot_snake_10/homing_cmd", &homing_status);
 
-ros::Subscriber<std_msgs::Float32> sub("/robot_snake_10/linear_cmd", &set_linear_cmd);
-ros::Subscriber<std_msgs::Float32> sub1("/robot_snake_10/doing_linear_homing", &status_linear_homing);
+// ros::Subscriber<std_msgs::Float32> sub("/robot_snake_10/linear_cmd", &set_linear_cmd);
+
+ros::ServiceServer<SetBool::Request, SetBool::Response> server("linear_homing_status",&callback);
+
+//=====[ VARIABLES ]============================================================
 
 /////////
 
@@ -62,7 +70,6 @@ int homing_end=10;
 float pwm_val=0, E=0, Position,error,tmp_pos=0;
 int flag=1, connectionOk = 0;
 unsigned int lastMessage = 0;
-float linear_status; 
 
 void setup() {
   
@@ -72,55 +79,43 @@ void setup() {
 
   pinMode(DIR_PIN, OUTPUT);
   pinMode(PWM_PIN, OUTPUT);
-  pinMode(HOME_MS_PIN, INPUT_PULLUP);
-  pinMode(LIM_MS_PIN, INPUT_PULLUP);
+  pinMode(HOME_MS_PIN, INPUT);
+  pinMode(LIM_MS_PIN, INPUT);
   // Placing the robot at a starting point...
   // becuse we have Relative encoder and not abs encoder.
-  //homing();
+  // homing();
   // LED_blink(); 
 
-   //digitalWrite(DIR_PIN, LOW);
-   //analogWrite(PWM_PIN, 0);
+   digitalWrite(DIR_PIN, LOW);
+   analogWrite(PWM_PIN, 0);
+
   
   nh.getHardware()->setBaud(115200);
   nh.initNode();
-  nh.subscribe(sub);
-  nh.subscribe(sub1);
+  //nh.subscribe(sub);
   nh.advertise(pub);
+  nh.advertiseService(server);
   delay (500);
 
 }
 
 void loop() {
 
-     if (nh.connected()){  
+//if homing status - start to work - homing
+ if (homing_status_linear ==true){
+    doneHH=false;
+    homing();  
+  } //if
 
-      if(linear_status==1){
-        homing_status.data=2;
-        pub.publish(&homing_status);
-        nh.spinOnce();
-        nh.logwarn("arduino is in the flag");
-        homing();
-        int i=0;
-      }
-
-
-        
+//if homing status false - homing done !
+ else{
+  
      Position = myEnc.read();     // Reading of a current situation.-
      
       //char str[10];
       //dtostrf(Position/TIC_TO_MM,6,2, str);
       //nh.logwarn(str);
-      /*
-     if(abs(CALC_DESIRED-DESIRED)>0.1)
-        if(CALC_DESIRED<DESIRED)
-          CALC_DESIRED+=0.02;
-        else
-          CALC_DESIRED-=0.02;
-     else
-      CALC_DESIRED = DESIRED;
-      */
-        
+
      //error = CALC_DESIRED - Position/TIC_TO_MM;  // calc current error.
     error = DESIRED - Position/TIC_TO_MM; 
     CALC_DESIRED = DESIRED;
@@ -140,16 +135,14 @@ void loop() {
     Serial.print("\tPWM: ");
     Serial.print(pwm_val);
     */
-
-   
+    
     // make sure the input is valid
     if (DESIRED<0){
-      Serial.print("\n Distance too small \n");
+      //Serial.print("\n Distance too small \n");
       }
     if (DESIRED>790){
-        Serial.print("\n Distance too big \n");
+        //Serial.print("\n Distance too big \n");
         }
-         
 if(digitalRead(HOME_MS_PIN)&&digitalRead(LIM_MS_PIN)&&CALC_DESIRED>=0&&DESIRED>=0&&DESIRED<maxRailLength){
         
       E += error;   // value of error for integral controller.
@@ -171,12 +164,12 @@ if(digitalRead(HOME_MS_PIN)&&digitalRead(LIM_MS_PIN)&&CALC_DESIRED>=0&&DESIRED>=
       digitalWrite(DIR_PIN, pwm_val<0 ? LOW : HIGH);
       analogWrite(PWM_PIN, abs(pwm_val));
     }
-  
+ 
        else if (!digitalRead(HOME_MS_PIN)){ // if back microswitch is pressed, move forward for 1 sec
           //LED_blink();
           digitalWrite(DIR_PIN,HIGH);
           analogWrite(PWM_PIN, 150);
-          delay (200);
+          delay (500);
           analogWrite(PWM_PIN, 0);
              }
           
@@ -194,19 +187,15 @@ if(digitalRead(HOME_MS_PIN)&&digitalRead(LIM_MS_PIN)&&CALC_DESIRED>=0&&DESIRED>=
        lastError = error;
        previousTime = currentTime; 
        nh.spinOnce();
-      
-     }
+  } //else
 
-
-     else{
-       homing_status.data=1;
+ //if ROS shutdown
+ if(!nh.connected()){
        nh.logwarn("Waiting For ROS");
        analogWrite(PWM_PIN, 0);
-       digitalWrite(DIR_PIN, LOW);
-
-     }
-     
-  pub.publish(&homing_status);
+       digitalWrite(DIR_PIN, LOW);  
+ }
+ 
   nh.spinOnce();
   delay(2);
 
@@ -215,25 +204,22 @@ if(digitalRead(HOME_MS_PIN)&&digitalRead(LIM_MS_PIN)&&CALC_DESIRED>=0&&DESIRED>=
 
 ////////////homing/////////////////////////////
 void homing(){
+  doneHH = false;
   nh.logwarn("arduino start homing");
-  homing_status.data=2;
-  pub.publish(&homing_status);
-  nh.spinOnce();
-//Serial.println("Start Homing");
-  delay(200);
+  nh.logwarn("start homing in arduino");
+  //Serial.println("Start Homing");
+  delay(50);
  int  counter=0;
   int pwm_val_1 = 160, pwm_val_2 = 60,i=0;
-
   
 // move forwad for 1 sec//
-  while (i<100&&digitalRead(LIM_MS_PIN)){
+  while (i<500 && digitalRead(LIM_MS_PIN)){
   analogWrite(PWM_PIN, pwm_val_1);
   digitalWrite(DIR_PIN,HIGH);
-  delay(4);
+  delay(2);
   i++;
   }
-   nh.logwarn("arduino move forward first time ");
-
+  
   //move BACK until presses
   analogWrite(PWM_PIN, pwm_val_1);
   digitalWrite(DIR_PIN, LOW);
@@ -241,32 +227,25 @@ void homing(){
     delay(2);
   }
   
-  nh.logwarn("arduino move back fast ");
-  
   //move FORWARD for 1 sec
   analogWrite(PWM_PIN, pwm_val_1);
   digitalWrite(DIR_PIN, HIGH);
-  nh.logwarn("arduino move forward one sec ");
-  delay(500);
+  delay(50);
 
   //move BACK until presses
   analogWrite(PWM_PIN, pwm_val_2);
   digitalWrite(DIR_PIN, LOW);
-    nh.logwarn("arduino move back slow ");
   while(digitalRead(HOME_MS_PIN)) {     
     delay(2);
   }
- 
-  
  analogWrite(PWM_PIN, 0);
- delay(500);
+ delay(50);
 
-//set new 0 point//
+  ///set new 0 point//
   myEnc.write(0);
-
-  
   error = homing_end;
     while (counter<count_num){
+    //while (error < 0.01){
       
     Position = myEnc.read();
      error = homing_end - Position/TIC_TO_MM;
@@ -296,26 +275,23 @@ void homing(){
       Serial.print(pwm_val);
       Serial.print("\tcounter:");
       Serial.println(counter);
-       */
+      */
       }
-     
-    nh.logwarn("stop move forward ");
-
+      
 //STOP
   analogWrite(PWM_PIN, 0);
   digitalWrite(DIR_PIN, LOW);
+ 
+  //Set encoder to 0
+  //Serial.println("doneH Homing");
   myEnc.write(0);
   
-  homing_status.data=3;
-  pub.publish(&homing_status);
-  nh.spinOnce();
-
-   nh.logwarn("Done Homing");
-
-  //Set encoder to 0
-  Serial.println("Done Homing");
-  delay(10);
-
+  //delay(100);
+  //char str[10];
+  //dtostrf(myEnc.read()/TIC_TO_MM,6,2, str);
+  //nh.logwarn(str);
+  nh.logwarn("doneH HOMEING");
+  doneHH = true;
 }
 
 void set_linear_cmd(const std_msgs::Float32& msg){
@@ -323,17 +299,38 @@ void set_linear_cmd(const std_msgs::Float32& msg){
   DESIRED = msg.data;
 }
 
-void status_linear_homing(const std_msgs::Float32& msg){
-  lastMessage = millis();
-  linear_status = msg.data;
-}
-
-
-
 void LED_blink(){
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
   delay(50);
   digitalWrite(13, LOW);
   delay(50);
+}
+
+bool callback(SetBool::Request &req, SetBool::Response &res)
+{
+  /*
+if(req.data==true){
+  homing_status_linear=true;
+  //res.success=false;
+  doneHH=false;
+}
+else{
+    homing_status_linear=false;
+      doneHH=true;
+
+}
+  
+  if(doneHH=true){
+  res.success=true;
+  }
+  else
+    res.success=false;
+*/
+  //bool A=req.data;
+  res.success=true;
+  return false;
+
+
+  
 }

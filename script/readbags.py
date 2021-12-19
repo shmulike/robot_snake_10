@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
-
-from bagpy import bagreader
-import bagpy
-import pandas as pd
-import seaborn as sea
+import numpy as np
+from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 
-b = bagreader('/home/robot-snake/rs_ws/src/robot_snake_10/bags/_2021-06-03-07-52-18.bag')
-LASER_MSG = b.message_by_topic('/robot_snake_10/joint_cmd')
-LASER_MSG
-df_laser = pd.read_csv(LASER_MSG)
-df_laser
+x = np.linspace(0,2*np.pi,100)
+y = np.sin(x) + np.random.random(100) * 0.2
+yhat = savgol_filter(y, 51, 3)
+
+plt.plot(x, y)
+plt.plot(x,yhat, color='green')
+plt.show()

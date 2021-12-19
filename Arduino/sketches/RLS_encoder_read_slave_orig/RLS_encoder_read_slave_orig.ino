@@ -13,7 +13,10 @@
 //=====[ VARIABLES ]============================================================
 RLS_Encoder enc;
 float value = 0;
-uint8_t slave_1 = 0x64;
+uint8_t slave_1 = 0x65;
+// give it a name:
+int led = 13;
+float prev_value=0;
 
 //=====[ Function declaraion ]========================================
 void requestEvent();
@@ -22,7 +25,7 @@ void requestEvent();
 void setup() {
   //if(PRINT)
     //Serial.begin(115200); while(!Serial);
-  
+  pinMode(led, OUTPUT);
   enc.begin(); delay(5);
   // enc.set_read(); delay(5);
   Wire.begin(I2C_SLAVE, slave_1, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
@@ -36,6 +39,8 @@ void loop() {
   if(PRINT)
     Serial.println(enc.get_pos(),3);
   delay(2);
+  else
+   digitalWrite(led, LOW);
 }
 //==============================================================================
 

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -40,6 +41,8 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add "message_generation" and every package in MSG_DEP_SET to
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  std_msgs
+  std_srvs
 )
 ##   * add "message_runtime" and every package in MSG_DEP_SET to
 ##     catkin_package(CATKIN_DEPENDS ...)
@@ -56,11 +59,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+ add_service_files(
+   FILES
+   HomingLinearSystem.srv
+   SetBool.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -70,10 +73,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+   
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,6 +111,10 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES robot_snake_10
+  geometry_msgs
+  std_msgs
+  std_srvs
+  roscpp
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -229,3 +237,23 @@ target_link_libraries(move_v10_tester ${catkin_LIBRARIES} )
 add_executable(move_v10_tester_2 src/move_test_2.cpp)
 add_dependencies(move_v10_tester_2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(move_v10_tester_2 ${catkin_LIBRARIES} )
+
+add_executable(homing_controller src/homing_controller.cpp)
+add_dependencies(homing_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(homing_controller ${catkin_LIBRARIES} )
+
+add_executable(circle_move src/circle_move.cpp)
+add_dependencies(circle_move ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(circle_move ${catkin_LIBRARIES} )
+
+add_executable(square_move src/square_move.cpp)
+add_dependencies(square_move ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(square_move ${catkin_LIBRARIES} )
+
+add_executable(test_server src/test_server.cpp)
+add_dependencies(test_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_server ${catkin_LIBRARIES} )
+
+add_executable(test_client src/test_client.cpp)
+add_dependencies(test_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_client ${catkin_LIBRARIES} )

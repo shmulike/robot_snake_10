@@ -27,7 +27,7 @@ int count = 0;
 //uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c};
 //float joint_offset[] = {40, 44.0, 34.176, 44.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 uint8_t slave_add[N_links - 1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69 , 0x6a, 0x6b, 0x6c};
-float joint_offset[N_links] = {58, 35.0, 317.0, 53.2, 51.0, 49.0, 39.87, 44.0, 134.0, 314.0};
+float joint_offset[N_links] = {58, 35.0, 317.0, 53.2, 51.0, 49.0, 39.87, 44.0, 129.0, 314.0};
 //uint8_t slave_add[N_links-1] = { 0x69, 0x6a, 0x6b, 0x6c};
 //float joint_offset[] = { 0.0, 0.0, 0.0, 0.0};
 /*
@@ -64,7 +64,7 @@ void setup() {
   nh.initNode();
   nh.advertise(pub_joints);
   joint_ang.data_length = N_links;
-  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 200000);
+  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 100000);
   //Wire.setDefaultTimeout(250000); // 10ms default timeout
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # license removed for brevity
-import subprocess
+
 from tkinter import ttk
 from tkinter import *
 import numpy as np
@@ -113,6 +113,7 @@ def videoDepthLoop(mirror=False):
         # check switcher value
 
 
+
 def videoLoop(mirror=False):
     if videoloop_stop[1] == 1:
         # if switcher tells to stop then we switch it again and stop videoloop
@@ -152,8 +153,6 @@ def videoLoop(mirror=False):
         panel.image = image
         panel.place(x=50, y=50)
         # check switcher value
-
-
 
 
 class APP:
@@ -256,7 +255,7 @@ class APP:
         self.buttons_down_tab2 = [0 for x in range(N_joints)]
         self.buttons_reset_tab2 = [0 for x in range(N_joints)]
         self.joint_cmd = [0 for x in range(N_joints)]
-        j_row = 1
+        j_row = 0
         for i in range(N_links):
             V_i = 0.123
             V_cmd = 0.124
@@ -307,25 +306,10 @@ class APP:
                 self.tension_label_tab2[i][j] = ttk.Label(self.frame_tab2, textvariable=self.tension_text[i][j])
                 self.tension_label_tab2[i][j].grid(column=5 + j, row=i, padx=30)
                 j_row += 3
-
-        self.homing_process = ''
-        self.homing_button = Button(self.frame_tab1, text="Homing", bg="#fff", font=("", 20),
-                                    command=partial(self.launch_homing))
-        self.homing_button.grid(column=1, row=0)
-        self.homing_kill_button = Button(self.frame_tab1, text="Kill Homing", bg="#fff", font=("", 20),
-                                         command=partial(self.kill_homing))
-        self.homing_kill_button.grid(column=2, row=0)
         self.home_position()
 
         # while not rospy.is_shutdown():
         #     rospy.Rate(100).sleep()
-
-    def launch_homing(self):
-        self.homing_process = subprocess.Popen("rosrun robot_snake_10 homing_controller".split(), shell=False)
-
-    def kill_homing(self):
-        self.homing_process.kill()
-        self.homing_process.terminate()
 
     def slider_pwm_change(self, event, i):
         # print(self.slider_pwm[i][j].get())
