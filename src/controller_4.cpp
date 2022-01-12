@@ -27,7 +27,7 @@
 using namespace std;
 
 
-#define ROS_rate 150.0
+#define ROS_rate 300
 //#define N_string 2              // In single joints
 #define N_links 10          // Number of controlled joints
 #define N_links_def 10         // Total number of joints in the system
@@ -46,7 +46,7 @@ using namespace std;
 #define limit_angle_warn 35.0
 #define limit_max_tension 35.0        // String tension limit [Kg]
 #define limit_min_tension 0.2        // String tension limit [Kg]
-#define tension_slop 2 // y=tension_slop*x
+#define tension_slop 0.00001 // y=tension_slop*x
 #define step_tension 20
 
 // -------------------- Global variables --------------------
@@ -55,7 +55,7 @@ using namespace std;
 
 double Kp_angle[N_links_def] = {25, 35, 50, 35, 50, 50, 50, 50, 70, 50};
 double Ki_angle[N_links_def] = {100, 35, 20, 4, 5, 5, 5, 5, 7, 5};
-double Kd_angle[N_links_def] = {0.0, 2.0, 2.0, 3.0, 3.5, 3.0, 3.0, 3.0, 3.0, 3.0};
+double Kd_angle[N_links_def] = {0.0, 2.0, 2.0, 3.0, 2.0, 3.0, 3.0, 3.0, 3.0, 3.0};
 
 double Kp_tension[N_links_def] = {40, 5, 24, 5, 2, 7, 7, 7, 7, 7};
 double Ki_tension[N_links_def] = {200, 0.3, 0.9, 0.5, 0.4, 0.3, 0.4, 0.3, 0.4, 0.3};
@@ -73,13 +73,33 @@ double joint_val[N_links_def] = {0}, joint_cmd[N_links_def] = {0};
 double linear_val = 0, linear_cmd = 0;
 int motor_cmd[2][N_links_def] = {0}, motor_cmd_flat[N_links * 2] = {0};
 double tension_val[2][N_links_def] = {0};
+double Weight_Matrix[2*N_links_def][2*N_links_def]={{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0.15,0,0,0,0.07,0,0.03,0,0.09,0,0,0,0.09,0,0,0,0.03,0,0,0.07},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0.15,0,0,0,0.07,0,0,0,0.09,0,0,0,0.03,0,0,0.03},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0.15,0,0,0,0.09,0,0,0,0.07,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0.15,0,0,0,0.09,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.15,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                                                    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 double pwm_temp = 0;
 std_msgs::Int32MultiArray motor_cmd_PWM;
 bool alive[2] = {0};        // [0] Joints -- [1] Tensions
 double last_tension[2][N_links_def] = {0};
 int last_PWM[2][N_links_def]={0};
-
+int vec_mot_cmd[N_links_def*2]= {0};
 
 ros::Publisher pub_motor_cmd;
 
@@ -102,6 +122,11 @@ void publish_motor_cmd(int motor_cmd[][N_links_def]);
 
 double linear_move_ten(int k);
 
+void conv_mat_to_vec(int *m );
+
+void mul_vec_and_mat(int *m , double b[2*N_links_def][2*N_links_def]);
+
+void conv_1Dvec_to_2Dvec(int *m , int b[][10]);
 
 std::stack <clock_t> tictoc_stack;
 std::clock_t temp_time = std::clock();
@@ -178,8 +203,8 @@ int main(int argc, char **argv) {
                     motor_cmd[1][joint_i] = joints_CTRL[joint_i].second.calculate(tension_cmd[joint_i],
                                                                                   tension_val[1][joint_i]);
                 }
-
-
+            
+                
                 if (fabs(joint_val[joint_i]) > limit_angle_warn) {
                     ROS_WARN("-> Joint #%d - angle got to its limit: %.2lf", joint_i, joint_val[joint_i]);
                     if (fabs(joint_val[joint_i]) > limit_angle_error) {
@@ -194,46 +219,67 @@ int main(int argc, char **argv) {
                                   joint_val[joint_i]);
                     }
                 }
+
+
+/*
                 // For each string in joint-i
                 for (int j = 0; j < 2; j++) {
                     // If tension if bigger than MAX limit -> stop pulling, release opposite string
                     if (tension_val[j][joint_i] > limit_max_tension) {
-                        if ((joint_cmd[joint_i] - joint_val[joint_i]) < 0 && joint_i % 2 > 0) {
-                            motor_cmd[1][joint_i] = 0;
-                            motor_cmd[0][joint_i] += -(tension_slop*MAX_PWM_tension[joint_i])/step_tension;
-                        } else {
-                            motor_cmd[0][joint_i] = 0;
-                            motor_cmd[1][joint_i] += -(tension_slop*MAX_PWM_tension[joint_i])/step_tension;
-                        }
+                       // if ((joint_cmd[joint_i] - joint_val[joint_i]) < 0 && joint_i % 2 > 0) {
+                            //motor_cmd[1][joint_i] = 0;
+                            motor_cmd[j][joint_i] += -(tension_slop*MAX_PWM_tension[joint_i]);
+                       // } else {
+                            //motor_cmd[0][joint_i] = 0;
+                            //motor_cmd[1][joint_i] += -(tension_slop*MAX_PWM_tension[joint_i]);
+                        //}
                         ROS_FATAL("J%d - String #%d - tension got to its max limit: %.2lf", joint_i, 2 * joint_i + j,
                                   tension_val[j][joint_i]);
                     }
                         // If tension if smaller than MIN limit -> pull
                     else if (tension_val[j][joint_i] < limit_min_tension) {
-                        if (joint_cmd[joint_i] - joint_val[joint_i] < 0 && joint_i % 2 > 0) {
-                            motor_cmd[0][joint_i] += (tension_slop*MAX_PWM_tension[joint_i])/step_tension;
+                        //if (joint_cmd[joint_i] - joint_val[joint_i] < 0 && joint_i % 2 > 0) {
+                            motor_cmd[j][joint_i] += (tension_slop*MAX_PWM_tension[joint_i]);
                             //joints_CTRL[joint_i].first.resetSum();
                             //joints_CTRL[joint_i].second.resetSum();
-
-                        } else {
-                            motor_cmd[1][joint_i] += (tension_slop*MAX_PWM_tension[joint_i])/step_tension;
-                        }
-                        ROS_FATAL("J%d - String #%d - tension got to its min limit: %.2lf ", joint_i, 2 * joint_i + j,
+                    ROS_FATAL("J%d - String #%d - tension got to its min limit: %.2lf ", joint_i, 2 * joint_i + j,
                                   tension_val[j][joint_i]);
                     }
-                }
-                // ---------- End check limits
+                    else if(j==1){ // Fix motor command
+                        if (joint_i==0){
+                            motor_cmd[1][0] += -0.11 * motor_cmd[0][0]-0.6 * motor_cmd[0][6]-0.6 * motor_cmd[0][4]-0.4 * motor_cmd[1][9]-0.4 * motor_cmd[0][2]
+                                   -0.2 * motor_cmd[1][3]-0.2 * motor_cmd[0][8];
+                        }
+                        if(joint_i==2)
+                            motor_cmd[1][2] += -0.11 * motor_cmd[0][2]-0.6 * motor_cmd[0][6]-0.4 * motor_cmd[0][4]-0.2 * motor_cmd[1][9]-0.1 * motor_cmd[0][8];
+                        if(joint_i==4)
+                            motor_cmd[1][4] += -0.11 * motor_cmd[0][4]-0.6 * motor_cmd[0][6]-0.4 * motor_cmd[0][8];
+                         }
+                        //} else {
+                          //  motor_cmd[1][joint_i] += (tension_slop*MAX_PWM_tension[joint_i]);
+                        //}
+
+                        }  // ---------- End check limits
 
                 //ROS_INFO("Joint #%d:\tPos/cmd= %.3f/%.1f;\tPWM=[%d,%d];\tT1= %.2f;\tT2= %.2f\tE_sum=%.2f\tkP=%.2f\tE_sum=%.2f\tkP=%.2f",joint_i, joint_val[joint_i],joint_cmd[joint_i], motor_cmd[0][joint_i], motor_cmd[1][joint_i], tension_val[0][joint_i], tension_val[1][joint_i],joint_error_sum[joint_i],joint_error[joint_i]*Kp_angle[joint_i],tension_error[1][joint_i]*Kp_tension , tension_error_sum[1][joint_i]);
-                
+
                 ROS_INFO(
                         "Joint #%d:\tPos/cmd= %.3lf/%.3lf;\tPWM=[%d,%d];\tT1= %.2lf;\tT2= %.2lf\tIout= %.2lf\tPout= %.2lf",
                         joint_i, joint_val[joint_i], joint_cmd[joint_i], motor_cmd[0][joint_i], motor_cmd[1][joint_i],
                         tension_val[0][joint_i], tension_val[1][joint_i], joints_CTRL[joint_i].first.Iout,
                         joints_CTRL[joint_i].first.Pout);
-                        
+                 */        
             } // End of links loop
             ROS_INFO("--------------------");
+
+            //convert 2D array to 1D array by take 1 col from motor_cmd and push in the new array 
+            conv_mat_to_vec(vec_mot_cmd); 
+                   
+            // multipy weight matrix eith the valu of the motor
+            mul_vec_and_mat(vec_mot_cmd , Weight_Matrix);
+            
+            //convert 1D array to 2D array 
+            conv_1Dvec_to_2Dvec(vec_mot_cmd, motor_cmd);
 
             // Publish motor command to micro-controller
             publish_motor_cmd(motor_cmd);
@@ -294,9 +340,10 @@ void publish_motor_cmd(int motor_cmd[][N_links_def]) {
     for (int joint_i = 0; joint_i < N_links_def; joint_i++) {
         for (int j = 0; j < 2; j++) {
             //if(abs(last_PWM[j][joint_i]-motor_cmd[j][joint_i])>70)
+                //motor_cmd[j][joint_i]=last_PWM[j][joint_i]+ 0.1* motor_cmd[j][joint_i];
               //  motor_cmd[j][joint_i]=tension_slop*MAX_PWM_tension[joint_i]/step_tension+last_PWM[j][joint_i];
             motor_cmd_PWM.data.push_back(motor_cmd[j][joint_i]);
-            //last_PWM[j][joint_i]=motor_cmd[j][joint_i];
+            last_PWM[j][joint_i]=motor_cmd[j][joint_i];
         }
     }
     
@@ -332,6 +379,57 @@ double linear_move_ten(int k){
     tension_PWM +=1;
 return(cur_PWM);
 }
+
+void conv_mat_to_vec(int *m ){
+      
+int k=0;
+    for(int i=0; i<N_links_def; i++){
+        for(int j=0; j<2;j++){
+             m[k]=motor_cmd[j][i];
+             k+=1;
+        }
+    }
+}
+
+void mul_vec_and_mat(int *m , double b[2*N_links_def][2*N_links_def]){
+
+    for(int i=0; i<N_links_def*2; i++){
+      for(int j=0; j<N_links_def*2;j++){
+             m[i]+=(int)(m[j]*b[i][j]);
+        }
+    }
+}
+
+void conv_1Dvec_to_2Dvec(int *m , int b[][10]){
+
+int k=0;
+    for(int i=0; i<N_links_def; i++){
+        for(int j=0; j<2;j++){
+
+            // If tension if bigger than MAX limit -> stop pulling, release opposite string
+            if (tension_val[j][i] > limit_max_tension) {
+                 motor_cmd[j][i] += -(tension_slop*MAX_PWM_tension[i]);
+                 ROS_FATAL("J%d - String #%d - tension got to its max limit: %.2lf", i, 2 * i + j,tension_val[j][i]);
+                    }
+            
+            // If tension if smaller than MIN limit -> pull
+            else if (tension_val[j][i] < limit_min_tension) {
+                motor_cmd[j][i] += (tension_slop*MAX_PWM_tension[i]);
+                ROS_FATAL("J%d - String #%d - tension got to its min limit: %.2lf ", i, 2 * i + j,tension_val[j][i]);
+            }
+            else{
+            b[j][i]= m[k];
+            }
+            k++;
+        }
+            ROS_INFO(
+            "Joint #%d:\tPos/cmd= %.3lf/%.3lf;\tPWM=[%d,%d];\tT1= %.2lf;\tT2= %.2lf",
+            i, joint_val[i], joint_cmd[i], motor_cmd[0][i], motor_cmd[1][i],
+            tension_val[0][i], tension_val[1][i]);
+    }
+}
+
+
 
 
 /*

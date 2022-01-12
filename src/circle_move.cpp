@@ -20,7 +20,7 @@
 #define N_links_def 10
 #define PI 3.14159265
 #define sinAmp1 5
-#define step 3000.0
+#define step 4000.0
 #define step_factor 20.0
 #define deg2rad  PI/180.0
 

@@ -51,10 +51,10 @@ def A(x):
 
 
 # Path for csv files
-Realangle_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_val122.csv'
-SIN_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_cmd122.csv'
-motor_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/motor_cmd122.csv'
-tension_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/tension_val122.csv'
+Realangle_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_val108.csv'
+SIN_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_cmd108.csv'
+motor_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/motor_cmd108.csv'
+tension_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/tension_val108.csv'
 
 # Variables that contain the information from the .csv file
 cur_angle = pd.read_csv(Realangle_file_name)
@@ -104,21 +104,24 @@ for i in range(0, len(tension)):
 # An array containing the times for the current angle
 
 cur_time = np.array([cur_angle.get('%time')]).T
-start_time = cur_time[0][0]
+des_time = np.array([des_angle.get('%time')]).T
+cur_time_motor = np.array(motor_data.get('%time')).T
+cur_time_tension = np.array(tension_data.get('%time')).T
+start_time = min([cur_time[0][0], des_time[0][0], cur_time_motor[0], cur_time_tension[0]])
+print(start_time)
+
+# start_time = cur_time[0][0]
 cur_time -= start_time
 cur_time = cur_time * 10 ** -9  # Transition from nanosecond to second
 # An array that contains the times for the desired angle
-des_time = np.array([des_angle.get('%time')]).T
 des_time -= start_time
 des_time = des_time * 10 ** -9  # Transition from nanosecond to second
 
 # An array containing the times for the current motor command
-cur_time_motor = np.array(motor_data.get('%time')).T
 cur_time_motor -= start_time
 cur_time_motor = cur_time_motor * 10 ** -9  # Transition from nanosecond to second
 
 # An array containing the times for the current tension
-cur_time_tension = np.array(tension_data.get('%time')).T
 cur_time_tension -= start_time
 cur_time_tension = cur_time_tension * 10 ** -9  # Transition from nanosecond to second
 
