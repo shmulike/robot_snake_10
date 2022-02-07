@@ -5,8 +5,6 @@
 
 //=====[ INCULDE ]==============================================================
 #include "RLS_Encoder.h"
-#include <ros.h>
-#include <std_msgs/Float32MultiArray.h>
 #include <i2c_t3.h>
 #define PRINT 1
 #define N_links 10
@@ -17,38 +15,31 @@
 
 //=====[ VARIABLES ]============================================================
 RLS_Encoder enc;
-ros::NodeHandle nh;
+
 byte data[4] = {0};
 //int value = 0;
 float arr[N_links] = {0.0}, val_previus = 0.0;
-std_msgs::Float32MultiArray joint_ang;
-ros::Publisher pub_joints("/robot_snake_10/joint_val", &joint_ang);
+
 int count = 0;
-//uint8_t slave_add[N_links-1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c};
-//float joint_offset[] = {40, 44.0, 34.176, 44.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 uint8_t slave_add[N_links - 1] = {0x64, 0x65, 0x66, 0x67, 0x68, 0x69 , 0x6a, 0x6b, 0x6c};
-float joint_offset[N_links] = {58, 35.0, 317.0, 53.2, 51.0, 49.0, 39.87, 44.0, 129.0, 314.0};
-//uint8_t slave_add[N_links-1] = { 0x69, 0x6a, 0x6b, 0x6c};
-//float joint_offset[] = { 0.0, 0.0, 0.0, 0.0};
-/*
-  union u_tag{
-    byte b[4];
-    float fval;
-  } u;
-*/
+float joint_offset[N_links] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
 
 union floatToBytes {
   char buffer[4];
   float encReading;
 } converter;
 
+float cou=0;
+int loop_counter=0;             //holds the count for every loop pass
+long loop_timer_now;          //holds the current millis
+long previous_millis;         //holds the previous millis
+float loop_time;              //holds difference (loop_timer_now - previous_millis) = total execution time
+int loop_test_times = 100;  //Run loop 20000 times then calculate time
+
 
 //=====[ FUNCTIONS ]================================================================
-/*
-   val=10   -> return 10
-   val=350  -> retunr 350-360=-10
-   val=
-*/
+
 float wrapTo180(float val) {
   //return (val > 180)? val-360.0 : val;
   return val;
@@ -56,16 +47,11 @@ float wrapTo180(float val) {
 //=====[ SETUP ]================================================================
 void setup() {
   Serial.begin(115200); while (!Serial);
-  //Serial.println("Start");
   enc.begin();
-  //enc.set_read();
-  //enc.start_response();
-  nh.getHardware()->setBaud(115200);
-  nh.initNode();
-  nh.advertise(pub_joints);
-  joint_ang.data_length = N_links;
-  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 100000);
-  Wire.setDefaultTimeout(50000); // 10ms default timeout
+
+  Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
+  //Wire.setDefaultTimeout(50000); // 10ms default timeout
+  Wire.setClock(1800000);
 }
 
 //=====[ LOOP ]=================================================================
@@ -76,18 +62,25 @@ void loop() {
   // Read first=this encoder position
 
   Serial2.flush();
-  /*
-    while (Serial2.available()){
-      if (Serial2.read()=='1'){
-        arr[0] = enc.get_pos()-joint_offset[0];
-        break;
-        }
-    }
-  */
 
+  
+
+  loop_counter++;
+  if (loop_counter == 1000)
+  { previous_millis = loop_timer_now; loop_timer_now = millis(); loop_counter = 0;
+    loop_time = ((loop_timer_now - previous_millis)/1000.0)/1000; 
+    loop_time=1/loop_time;
+    Serial.print(loop_time, 6);
+    Serial.print("\n");
+  }
+  if (loop_counter==0){
+    loop_timer_now = millis();
+  }
+  
   // Read others encoder position
-  arr[0] = wrapTo180(enc.get_pos() - joint_offset[0]); //master read
-
+  arr[0] = cou; //master read
+  cou++;
+  
   for (int i = 1; i < N_links_read; i++) {                 // Loop to run on every slave
     //Serial.print("S");
     Wire.requestFrom(slave_add[i - 1], sizeof(data)); // request slave data
@@ -109,27 +102,27 @@ void loop() {
           u.b[i] = data[i];
           //arr[i] = u.fval - joint_offset[i];
         */
-
+        
         for (int i = 0; i < 4; i++)                     // 4 bytes
         {
           converter.buffer[i] = Wire.read();
         }
+        
         //Serial.print(converter.encReading);
         
-        arr[i] = wrapTo180(converter.encReading - joint_offset[i]);   // Convert angle to [-180,180]
-
+        //arr[i] = wrapTo180(converter.encReading - joint_offset[i]);   // Convert angle to [-180,180]
+        arr[i] = converter.encReading - joint_offset[i];
         //arr[i] = wrapTo180(converter.encReading);     // Convert angle to [-180,180]
 
 
       } //while
     } //else
     //Serial.print("H");
-    print_i2c_status();                 // print I2C final status
     // Wire.finish();
 
   } //for
 
-
+/**
   // print Encoder values
   if (PRINT) {
 //    Serial.print("val M"); //print master enc only
@@ -145,28 +138,10 @@ void loop() {
     }
     Serial.print("\n");
   }
+**/
+  
 
-  joint_ang.data = arr;
-  pub_joints.publish(&joint_ang);
-  nh.spinOnce();
 
   delay(1);
 }
 //==============================================================================
-
-//
-// print I2C status
-//
-void print_i2c_status(void)
-{
-  switch (Wire.status())
-  {
-    case I2C_WAITING:  /*Serial.print("I2C waiting, no errors\n");*/ break;
-    case I2C_ADDR_NAK: Serial.print(" Slave addr not acknowledged\n"); break;
-    case I2C_DATA_NAK: Serial.print(" Slave data not acknowledged\n"); break;
-    case I2C_ARB_LOST: Serial.print(" Bus Error: Arbitration Lost\n"); break;
-    case I2C_TIMEOUT:  Serial.print(" I2C timeout\n"); break;
-    case I2C_BUF_OVF:  Serial.print(" I2C buffer overflow\n"); break;
-    default:           Serial.print(" I2C busy\n"); break;
-  }
-}

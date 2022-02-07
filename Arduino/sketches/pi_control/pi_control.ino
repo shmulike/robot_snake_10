@@ -199,7 +199,7 @@ if(digitalRead(HOME_MS_PIN)&&digitalRead(LIM_MS_PIN)&&CALC_DESIRED>=0&&DESIRED>=
 
 
      else{
-       homing_status.data=1;
+       homing_status.data=3;
        nh.logwarn("Waiting For ROS");
        analogWrite(PWM_PIN, 0);
        digitalWrite(DIR_PIN, LOW);

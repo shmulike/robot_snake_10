@@ -51,10 +51,10 @@ def A(x):
 
 
 # Path for csv files
-Realangle_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_val122.csv'
-SIN_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_cmd122.csv'
-motor_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/motor_cmd122.csv'
-tension_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/tension_val122.csv'
+Realangle_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_val129.csv'
+SIN_file_name = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/joint_cmd129.csv'
+motor_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/motor_cmd129.csv'
+tension_file = '/home/robot-snake/rs_ws/src/robot_snake_10/bags/tension_val129.csv'
 
 # Variables that contain the information from the .csv file
 cur_angle = pd.read_csv(Realangle_file_name)

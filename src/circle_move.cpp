@@ -15,12 +15,12 @@
 
 // -------------------- Define constants --------------------
 //#define sinAmp1 25
-#define _Hz 100
+#define _Hz 25
 #define N_links 10
 #define N_links_def 10
 #define PI 3.14159265
 #define sinAmp1 5
-#define step 4000.0
+#define step 2000.0
 #define step_factor 20.0
 #define deg2rad  PI/180.0
 
